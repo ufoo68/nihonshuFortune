@@ -42,7 +42,7 @@ const clovaSkillHandler = Clova.Client
                     .endSession();
                 }
                 else {
-                    responseHelper.setSimpleSpeech(Clova.SpeechBuilder.createSpeechText(`飲み方は冷か、燗、どちらがいいですか？`))
+                    responseHelper.setSimpleSpeech(Clova.SpeechBuilder.createSpeechText(`飲み方はヒヤか、熱燗、どちらがいいですか？`))
                     .setSessionAttributes({tasteType: tasteType});
                 }
                 break;
