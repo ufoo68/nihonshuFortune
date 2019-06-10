@@ -8,32 +8,49 @@ const clovaSkillHandler = Clova.Client
     .configureSkill()
 
     //起動時に喋る
-    .onLaunchRequest((responseHelper: { setSimpleSpeech: (arg0: { lang: string; type: string; value: string; }) => void; }) => {
-        responseHelper.setSimpleSpeech({
-            lang: 'ja',
-            type: 'PlainText',
-            value: `日本酒診断をします。いくつかの質問に答えてください。`,
-        });
+    .onLaunchRequest((responseHelper: { setSimpleSpeech: (arg0: { lang: string; type: string; value: string; }) => Clova.Context; }) => {
+        responseHelper.setSimpleSpeech(Clova.SpeechBuilder.createSpeechText(`日本酒診断をします。２つの質問に答えてください。飲み方はヒヤか、熱燗、どちらがいいですか？`))
+        .setSessionAttributes({}); //Attributesの初期化
     })
 
     //ユーザーからの発話が来たら反応する箇所
     .onIntentRequest(async (responseHelper: { 
-        getIntentName: () => string; getSlots: () => string; setSimpleSpeech: { (arg0: { lang: string; type: string; value: string; }): void; (arg0: Clova.Clova.SpeechInfoText, arg1: boolean): void; }; }) => {
+        getIntentName: () => string; 
+        getSlot: (slotName: string) => string; 
+        getSessionAttributes: () => {drinkType?: string; tasteType?: string};
+        setSimpleSpeech: { (arg0: { lang: string; type: string; value: string; }): Clova.Context;
+        (arg0: Clova.Clova.SpeechInfoText, arg1: boolean): void; }; }) => {
         const intent = responseHelper.getIntentName();
-        //const slots = responseHelper.getSlots();
+        const drinkType = responseHelper.getSlot('drinkType') ? responseHelper.getSlot('drinkType') : responseHelper.getSessionAttributes().drinkType;
+        const tasteType = responseHelper.getSlot('tasteType') ? responseHelper.getSlot('tasteType') : responseHelper.getSessionAttributes().tasteType;
 
-        console.log('Intent:' + intent);
+        switch (intent) {
+            case 'howDrinkIntent':
+                if (drinkType && tasteType) {
+                    responseHelper.setSimpleSpeech(Clova.SpeechBuilder.createSpeechText(`${drinkType}で飲む${tasteType}のタニガワダケをオススメします。`))
+                    .endSession();
+                }
+                else {
+                    responseHelper.setSimpleSpeech(Clova.SpeechBuilder.createSpeechText(`甘口か、辛口、どちらがいいですか？`))
+                    .setSessionAttributes({drinkType: drinkType});
+                }
+                break;
 
-        let speech = {
-            lang: 'ja',
-            type: 'PlainText',
-            value:  `${intent}のインテントを受け取りました`
+            case 'howTasteIntent':
+                if (drinkType && tasteType) {
+                    responseHelper.setSimpleSpeech(Clova.SpeechBuilder.createSpeechText(`${drinkType}で飲む${tasteType}のタニガワダケをオススメします。`))
+                    .endSession();
+                }
+                else {
+                    responseHelper.setSimpleSpeech(Clova.SpeechBuilder.createSpeechText(`飲み方は冷か、燗、どちらがいいですか？`))
+                    .setSessionAttributes({tasteType: tasteType});
+                }
+                break;
+
+            default:
+                responseHelper.setSimpleSpeech(Clova.SpeechBuilder.createSpeechText(`もう一度お願いします`));
+                break;
         }
-
-        responseHelper.setSimpleSpeech(speech);
-        responseHelper.setSimpleSpeech(
-            Clova.SpeechBuilder.createSpeechText('開発中です'), true
-        );
     })
 
     //終了時
